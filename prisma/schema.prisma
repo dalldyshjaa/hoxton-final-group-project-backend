@@ -20,6 +20,7 @@ model User {
   balance      Int         @default(0)
   favorites    Favorites[]
   comments     Comment[]
+  hostings     Room[]
 }
 
 model Room {
@@ -33,6 +34,8 @@ model Room {
   city        String
   reviewsNr   Int         @default(0)
   review      Int
+  host        User        @relation(fields: [hostId], references: [id])
+  hostId      Int
   comments    Comment[]
   images      Images[]
   favorites   Favorites[]
