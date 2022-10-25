@@ -90,7 +90,7 @@ app.post("/check-email", async (req, res) => {
 
 app.get("/get-all-rooms", async (req, res) => {
   try {
-    const rooms = await prisma.room.findMany();
+    const rooms = await prisma.room.findMany({ include: { images: true } });
     res.send(rooms);
   } catch (error) {
     // @ts-ignore
