@@ -118,5 +118,5 @@ app.get("/single-room/:id", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log("here");
+  console.log(`Listening: http://localhost:${port}`);
 });
