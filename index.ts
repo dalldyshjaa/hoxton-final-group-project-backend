@@ -164,5 +164,5 @@ app.get("/get-user-reservations/:userId", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log("here");
+  console.log(`Listening: http://localhost:${port}`);
 });
