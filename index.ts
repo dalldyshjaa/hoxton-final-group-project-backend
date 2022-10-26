@@ -108,9 +108,55 @@ app.get("/single-room/:id", async (req, res) => {
             author: { select: { fullName: true, profileImage: true } },
           },
         },
+        images: true,
       },
     });
     res.send(room);
+  } catch (error) {
+    // @ts-ignore
+    res.status(400).send({ error: error });
+  }
+});
+
+app.post("/reserve/:roomId/:userId", async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: Number(req.params.userId) },
+    });
+
+    // @ts-ignore
+    if (user?.balance < req.body.price) {
+      res.send({ error: "Not enough balance" });
+    } else {
+      // @ts-ignore
+      let price = user?.balance - req.body.price;
+      console.log(price);
+      await prisma.user.update({
+        where: { id: Number(req.params.userId) },
+        data: { balance: price },
+      });
+      console.log("here");
+    }
+    const reservation = await prisma.reservations.create({
+      data: {
+        userId: Number(req.params.userId),
+        roomId: Number(req.params.roomId),
+      },
+    });
+    res.send({ message: "Success" });
+  } catch (error) {
+    // @ts-ignore
+    res.status(400).send({ error: error });
+  }
+});
+
+app.get("/get-user-reservations/:userId", async (req, res) => {
+  try {
+    const reservations = await prisma.reservations.findMany({
+      where: { userId: Number(req.params.userId) },
+      include: { room: true },
+    });
+    res.send(reservations);
   } catch (error) {
     // @ts-ignore
     res.status(400).send({ error: error });
