@@ -98,7 +98,7 @@ app.get("/get-all-rooms", async (req, res) => {
   }
 });
 
-app.get("/single-room/:id", async (req, res) => {
+app.get("/single-room/:id/:userId", async (req, res) => {
   try {
     const room = await prisma.room.findUnique({
       where: { id: Number(req.params.id) },
@@ -111,8 +111,19 @@ app.get("/single-room/:id", async (req, res) => {
         images: true,
       },
     });
+    const favorite = await prisma.favorites.findMany({
+      where: { userId: Number(req.params.userId) },
+    });
+    if (favorite.length === 0) {
+      // @ts-ignore
+      room.favorite = false;
+    } else {
+      // @ts-ignore
+      room.favorite = true;
+    }
     res.send(room);
   } catch (error) {
+    console.log(error);
     // @ts-ignore
     res.status(400).send({ error: error });
   }
@@ -150,6 +161,57 @@ app.post("/reserve/:roomId/:userId", async (req, res) => {
   }
 });
 
+app.post("/add-to-favorite/:roomId/:userId", async (req, res) => {
+  try {
+    const favorite = await prisma.favorites.create({
+      data: {
+        // @ts-ignore
+        image: req.body.image,
+        title: req.body.title,
+        userId: Number(req.params.userId),
+        roomId: Number(req.params.roomId),
+      },
+    });
+    const room = await prisma.room.findUnique({
+      where: { id: Number(req.params.roomId) },
+      include: {
+        comments: {
+          include: {
+            author: { select: { fullName: true, profileImage: true } },
+          },
+        },
+        images: true,
+      },
+    });
+    const favoritee = await prisma.favorites.findMany({
+      where: { userId: Number(req.params.userId) },
+    });
+    if (favoritee.length === 0) {
+      // @ts-ignore
+      room.favorite = false;
+    } else {
+      // @ts-ignore
+      room.favorite = true;
+    }
+    res.send(room);
+  } catch (error) {
+    // @ts-ignore
+    res.status(400).send({ error: error });
+  }
+});
+
+app.get("/get-wishlist/:userId", async (req, res) => {
+  try {
+    const wishlist = await prisma.favorites.findMany({
+      where: { userId: Number(req.params.userId) },
+    });
+    res.send(wishlist);
+  } catch (error) {
+    // @ts-ignore
+    res.status(400).send({ error: error });
+  }
+});
+
 app.get("/get-user-reservations/:userId", async (req, res) => {
   try {
     const reservations = await prisma.reservations.findMany({
@@ -157,6 +219,34 @@ app.get("/get-user-reservations/:userId", async (req, res) => {
       include: { room: true },
     });
     res.send(reservations);
+  } catch (error) {
+    // @ts-ignore
+    res.status(400).send({ error: error });
+  }
+});
+
+app.patch("/update-profile/:userId", async (req, res) => {
+  try {
+    await prisma.user.update({
+      where: { id: Number(req.params.userId) },
+      data:
+        // @ts-ignore
+        req.body,
+    });
+  } catch (error) {
+    // @ts-ignore
+    res.status(400).send({ error: error });
+  }
+});
+
+app.get("/profile-page/:userId", async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: Number(req.params.userId) },
+      include: { hostings: true },
+    });
+    console.log(user);
+    res.send(user);
   } catch (error) {
     // @ts-ignore
     res.status(400).send({ error: error });
