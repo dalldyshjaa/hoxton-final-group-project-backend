@@ -88,10 +88,44 @@ app.post("/check-email", async (req, res) => {
   }
 });
 
-app.get("/get-all-rooms", async (req, res) => {
+app.get("/get-all-rooms/:userId", async (req, res) => {
   try {
     const rooms = await prisma.room.findMany({ include: { images: true } });
+    for (let room of rooms) {
+      const favorite = await prisma.favorites.findMany({
+        where: { userId: Number(req.params.userId) },
+      });
+      if (favorite.length === 0) {
+        // @ts-ignore
+        room.favorite = false;
+      } else {
+        // @ts-ignore
+        room.favorite = true;
+      }
+    }
     res.send(rooms);
+  } catch (error) {
+    // @ts-ignore
+    res.status(400).send({ error: error });
+  }
+});
+
+app.get("/is-it-saved/:roomId/:userId", async (req, res) => {
+  try {
+    const favorite = await prisma.favorites.findFirst({
+      where: {
+        userId: Number(req.params.userId),
+        roomId: Number(req.params.roomId),
+      },
+    });
+    let flag;
+    // @ts-ignore
+    if (favorite.id) {
+      flag = true;
+    } else {
+      flag = false;
+    }
+    res.send(flag);
   } catch (error) {
     // @ts-ignore
     res.status(400).send({ error: error });
